@@ -1,0 +1,551 @@
+root@protco-dev-env:/data/config/nginx# cat vhost/*
+server {
+    listen      80;
+    listen      443 ssl;
+    include     conf.d/ssl.conf;
+    server_name devadmin.protco.in;
+    # security headers
+    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+    add_header Permissions-Policy        "interest-cohort=()" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    # index.html fallback
+    location / {
+        proxy_pass http://admin_web;
+        #try_files $uri $uri/ /index.html;
+    }
+    #现阶段前后端都使用同一域名,没有分别分配域名,故在va平台的配置中加入gateway服务端的配置
+    location /api/ {
+        # 允许请求地址跨域 * 做为通配符
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        # 设置请求方法跨域
+        add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+        # 设置是否允许 cookie 传输
+        add_header 'Access-Control-Allow-Credentials' 'true';
+        # 设置请求头 这里为什么不设置通配符 * 因为不支持
+        add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,X-Data-Type,X-Requested-With,X-Data-Type,X-Auth-Token';
+        #add_header 'Access-Control-Allow-Headers' '*';
+        if ($request_method = 'OPTIONS') {
+            return 204;
+        }
+        proxy_set_header HOST $host; #域名转发
+        proxy_set_header X-Real-IP $remote_addr; #IP转发
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        # 设置 options 请求处理
+        if ($request_method = 'OPTIONS') {
+           return 200;
+        }
+        proxy_pass http://gateway/;
+    }
+}
+server {
+        listen      80;
+        listen      443 ssl;
+        server_name devcerebro.protco.in;
+        include     conf.d/ssl.conf;
+
+        # security headers
+        add_header X-XSS-Protection          "1; mode=block" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+        add_header Permissions-Policy        "interest-cohort=()" always;
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+        #CORS
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+        add_header 'Access-Control-Allow-Credentials' 'true';
+        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
+
+        location / {
+           proxy_pass http://cerebro;
+        }
+
+}
+server {
+    listen      80;
+    listen      443 ssl;
+    include     conf.d/ssl.conf;
+    server_name devdocs.protco.in;
+    # security headers
+    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+    add_header Permissions-Policy        "interest-cohort=()" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    add_header 'Access-Control-Allow-Origin' '*' always;
+    add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+    add_header 'Access-Control-Allow-Credentials' 'true';
+    add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,X-Data-Type,X-Requested-With,X-Data-Type,X-Auth-Token';
+    #add_header 'Access-Control-Allow-Headers' '*';
+    # index.html fallback
+    location / {
+        proxy_pass http://docs_web;
+        #try_files $uri $uri/ /index.html;
+    }
+}
+server {
+    listen      80;
+    listen      443 ssl;
+    include     conf.d/ssl.conf;
+    server_name devintegration.protco.in;
+    # security headers
+    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+    add_header Permissions-Policy        "interest-cohort=()" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    rewrite ^(/rino-smart-download)$ /rino-smart-download.html redirect;
+    rewrite ^(/connectAlexa)$ /connectAlexa.html redirect;
+    rewrite ^(/connectAlexaEn)$ /connectAlexaEn.html redirect;
+    rewrite ^(/connectAlexaZh)$ /connectAlexaZh.html redirect;
+    rewrite ^(/download)$ /download.html redirect;
+    rewrite ^(/googleAssistant)$ /googleAssistant.html redirect;
+    rewrite ^(/googleAssistantEn)$ /googleAssistantEn.html redirect;
+    rewrite ^(/googleAssistantZh)$ /googleAssistantZh.html redirect;
+
+    add_header 'Access-Control-Allow-Origin' '*' always;
+    add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+    add_header 'Access-Control-Allow-Credentials' 'true';
+    add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,X-Data-Type,X-Requested-With,X-Data-Type,X-Auth-Token';
+    #add_header 'Access-Control-Allow-Headers' '*';
+    # index.html fallback
+    location / {
+        proxy_pass http://integ_web;
+        #try_files $uri $uri/ /index.html;
+    }
+}
+server {
+    listen      80;
+    listen      443 ssl;
+    include     conf.d/ssl.conf;
+    server_name deviot.protco.in;
+    # security headers
+    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+    add_header Permissions-Policy        "interest-cohort=()" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    # index.html fallback
+    location / {
+        proxy_pass http://iot_web;
+        #try_files $uri $uri/ /index.html;
+    }
+    #现阶段前后端都使用同一域名,没有分别分配域名,故在va平台的配置中加入gateway服务端的配置
+    location /api/ {
+        # 允许请求地址跨域 * 做为通配符
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        # 设置请求方法跨域
+        add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+        # 设置是否允许 cookie 传输
+        add_header 'Access-Control-Allow-Credentials' 'true';
+        # 设置请求头 这里为什么不设置通配符 * 因为不支持
+        add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,X-Data-Type,X-Requested-With,X-Data-Type,X-Auth-Token,language,app_id,client_id,os_name,rino_source,encrypt_type';
+        #add_header 'Access-Control-Allow-Headers' '*';
+        if ($request_method = 'OPTIONS') {
+            return 204;
+        }
+        proxy_set_header HOST $host; #域名转发
+        proxy_set_header X-Real-IP $remote_addr; #IP转发
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        # 设置 options 请求处理
+        if ($request_method = 'OPTIONS') {
+           return 200;
+        }
+        proxy_pass http://gateway/;
+    }
+    location /websocket/server {
+            proxy_pass http://websocket;
+            proxy_http_version 1.1;
+            proxy_connect_timeout 4s;
+            proxy_read_timeout 3600s;   #默认60s没有传输数据就会关闭，延长时间
+            proxy_send_timeout 12s;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+    }
+
+    location /xxl-job-admin {
+            proxy_pass http://xxl_job;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded_For $proxy_add_x_forwarded_for;
+    }
+
+    location /nacos {
+            proxy_pass http://nacos;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded_For $proxy_add_x_forwarded_for;
+    }
+
+    location ~ ^/webConfig.json {
+            default_type application/json;
+            return 200 '"{"deviceLogSearchApiReplaceMap": { "iot-test.yijian.store": "search-test.yijian.store" }}';
+    }
+}
+server {
+    listen      80;
+    listen      443 ssl;
+    include     conf.d/ssl.conf;
+    server_name devh5.protco.in;
+    # security headers
+    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+    add_header Permissions-Policy        "interest-cohort=()" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header 'Access-Control-Allow-Origin' '*' always;
+    add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+    add_header 'Access-Control-Allow-Credentials' 'true';
+    add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
+    # index.html fallback
+    location / {
+        proxy_pass http://h5_web;
+        #try_files $uri $uri/ /index.html;
+    }
+}
+server {
+        listen      80;
+        listen      443 ssl;
+        server_name devmqtt.protco.in;
+        include     conf.d/ssl.conf;
+
+        # security headers
+        add_header X-XSS-Protection          "1; mode=block" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+        add_header Permissions-Policy        "interest-cohort=()" always;
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+        #现阶段前后端都使用同一域名,没有分别分配域名,故在va平台的配置中加入gateway服务端的配置
+        location / {
+            proxy_pass http://wsmqtt;
+            proxy_http_version 1.1;
+            proxy_connect_timeout 4s;
+            proxy_read_timeout 3600s;   #默认60s没有传输数据就会关闭，延长时间
+            proxy_send_timeout 12s;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+        }
+}
+server {
+    listen      80;
+    listen      443 ssl;
+    include     conf.d/ssl.conf;
+    server_name devnfc.protco.in;
+    # security headers
+    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+    add_header Permissions-Policy        "interest-cohort=()" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    rewrite ^(/rino-smart-download)$ /rino-smart-download.html redirect;
+    rewrite ^(/connectAlexa)$ /connectAlexa.html redirect;
+    rewrite ^(/connectAlexaEn)$ /connectAlexaEn.html redirect;
+    rewrite ^(/connectAlexaZh)$ /connectAlexaZh.html redirect;
+    rewrite ^(/download)$ /download.html redirect;
+    rewrite ^(/googleAssistant)$ /googleAssistant.html redirect;
+    rewrite ^(/googleAssistantEn)$ /googleAssistantEn.html redirect;
+    rewrite ^(/googleAssistantZh)$ /googleAssistantZh.html redirect;
+
+    add_header 'Access-Control-Allow-Origin' '*' always;
+    add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+    add_header 'Access-Control-Allow-Credentials' 'true';
+    add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
+    #add_header 'Access-Control-Allow-Headers' '*';
+    # index.html fallback
+    location / {
+        proxy_pass http://h5_web;
+        #try_files $uri $uri/ /index.html;
+    }
+    location /.well-known/assetlinks.json {
+        default_type application/json;
+        return 200 '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.smart.protcoiot","sha256_cert_fingerprints":["AE:EE:74:B1:C7:90:FB:30:81:E5:BC:03:C4:5F:67:31:08:15:0D:70:A2:CA:0B:80:07:76:49:60:C7:B8:49:EC"]}},{"relation":["delegate_permission/common.get_login_creds"],"target":{"namespace":"web","site":"https://nfc.protco.in/alexa"}},{"relation":["delegate_permission/common.get_login_creds"],"target":{"namespace":"android_app","package_name":"com.smart.protcoiot","sha256_cert_fingerprints":["AE:EE:74:B1:C7:90:FB:30:81:E5:BC:03:C4:5F:67:31:08:15:0D:70:A2:CA:0B:80:07:76:49:60:C7:B8:49:EC"]}}]';
+    }
+    location /.well-known/apple-app-site-association {
+        default_type application/json;
+        return 200 '{"applinks":{"apps":[],"details":[{"appID":"95FK4N3CC4.com.smart.protcoiot","paths":["*"]}]},"webcredentials":{"apps":["com.smart.protcoiot"]}}';
+    }
+}
+server {
+    listen      80;
+    listen      443 ssl;
+    include     conf.d/ssl.conf;
+    server_name devopenapi.protco.in;
+
+    # security headers
+    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+    add_header Permissions-Policy        "interest-cohort=()" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    # . files
+    location ~ /\.(?!well-known) {
+        deny all;
+    }
+    # favicon.ico
+    location = /favicon.ico {
+        log_not_found off;
+        access_log    off;
+    }
+    # robots.txt
+    location = /robots.txt {
+        log_not_found off;
+        access_log    off;
+    }
+    location / {
+            # 允许请求地址跨域 * 做为通配符
+            add_header 'Access-Control-Allow-Origin' '*';
+            # 设置请求方法跨域
+            add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+            # 设置是否允许 cookie 传输
+            add_header 'Access-Control-Allow-Credentials' 'true';
+            # 设置请求头 这里为什么不设置通配符 * 因为不支持
+            #add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,X-Data-Type,X-Requested-With,X-Data-Type,X-Auth-Token';
+            add_header 'Access-Control-Allow-Headers' '*';
+            proxy_set_header HOST $host; #域名转发
+            proxy_set_header X-Real-IP $remote_addr; #IP转发
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            # 设置 options 请求处理
+            if ($request_method = 'OPTIONS') {
+                return 200;
+            }
+            proxy_pass http://openapi/platform/;
+    }
+}
+server {
+    listen      80;
+    listen      443 ssl;
+    include     conf.d/ssl.conf;
+    server_name product-vendor-list.protco.in;
+    # security headers
+    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+    add_header Permissions-Policy        "interest-cohort=()" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    add_header 'Access-Control-Allow-Origin' '*' always;
+    add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+    add_header 'Access-Control-Allow-Credentials' 'true';
+    add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,X-Data-Type,X-Requested-With,X-Data-Type,X-Auth-Token';
+    #add_header 'Access-Control-Allow-Headers' '*';
+    # index.html fallback
+    location / {
+        proxy_pass http://product-management;
+        #try_files $uri $uri/ /index.html;
+    }
+}
+server {
+    listen      80;
+    listen      443 ssl;
+    include     conf.d/ssl.conf;
+    server_name devproduct-testing.protco.in;
+    # security headers
+    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+    add_header Permissions-Policy        "interest-cohort=()" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    location / {
+        # 允许请求地址跨域 * 做为通配符
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        # 设置请求方法跨域
+        add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+        # 设置是否允许 cookie 传输
+        add_header 'Access-Control-Allow-Credentials' 'true';
+        # 设置请求头 这里为什么不设置通配符 * 因为不支持
+        add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,X-Data-Type,X-Requested-With,X-Data-Type,X-Auth-Token';
+        #add_header 'Access-Control-Allow-Headers' '*';
+        if ($request_method = 'OPTIONS') {
+            return 204;
+        }
+        proxy_set_header HOST $host; #域名转发
+        proxy_set_header X-Real-IP $remote_addr; #IP转发
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        # 设置 options 请求处理
+        if ($request_method = 'OPTIONS') {
+           return 200;
+        }
+        proxy_pass http://product_testing;
+        #try_files $uri $uri/ /index.html;
+    }
+}
+server {
+        listen      80;
+        listen      443 ssl;
+        server_name devrmqdashboard.protco.in;
+        include conf.d/ssl.conf;
+
+        # security headers
+        add_header X-XSS-Protection          "1; mode=block" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+        add_header Permissions-Policy        "interest-cohort=()" always;
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+        #CORS
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+        add_header 'Access-Control-Allow-Credentials' 'true';
+        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization';
+
+        location / {
+           proxy_pass http://rmqdash;
+        }
+
+}
+server {
+        listen      80;
+        listen      443 ssl;
+        server_name devsearch.protco.in;
+
+        # security headers
+        add_header X-XSS-Protection          "1; mode=block" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+        add_header Permissions-Policy        "interest-cohort=()" always;
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        # 允许请求地址跨域 * 做为通配符
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        # 设置请求方法跨域
+        add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+        # 设置是否允许 cookie 传输
+        add_header 'Access-Control-Allow-Credentials' 'true';
+        # 设置请求头 这里为什么不设置通配符 * 因为不支持
+        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,language,app_id,client_id,os_name';
+        include conf.d/ssl.conf;
+
+        # index.html fallback
+        #location / {
+        #    proxy_pass http://service;
+        #    #try_files $uri $uri/ /index.html;
+        #}
+
+        #现阶段前后端都使用同一域名,没有分别分配域名,故在va平台的配置中加入gateway服务端的配置
+        location / {
+           proxy_pass http://search;
+           proxy_http_version 1.1;
+           proxy_connect_timeout 4s;
+           proxy_read_timeout 3600s;   #默认60s没有传输数据就会关闭，延长时间
+           proxy_send_timeout 12s;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection $connection_upgrade;
+        }
+
+    }
+server {
+        listen      80;
+        listen      443 ssl;
+        server_name devservice.protco.in;
+
+        # security headers
+        add_header X-XSS-Protection          "1; mode=block" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+        add_header Permissions-Policy        "interest-cohort=()" always;
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        # 允许请求地址跨域 * 做为通配符
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        # 设置请求方法跨域
+        add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+        # 设置是否允许 cookie 传输
+        add_header 'Access-Control-Allow-Credentials' 'true';
+        # 设置请求头 这里为什么不设置通配符 * 因为不支持
+        add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,X-Data-Type,X-Requested-With,X-Data-Type,X-Auth-Token,language,app_id,client_id,os_name,version,devid,ua,package_name,rino_source,encrypt_type';
+        include conf.d/ssl.conf;
+
+        # index.html fallback
+        #location / {
+        #    proxy_pass http://service;
+        #    #try_files $uri $uri/ /index.html;
+        #}
+
+        #现阶段前后端都使用同一域名,没有分别分配域名,故在va平台的配置中加入gateway服务端的配置
+        location /api/ {
+            if ($request_method = 'OPTIONS') {
+                return 204;
+            }
+
+            proxy_set_header HOST $host; #域名转发
+            proxy_set_header X-Real-IP $remote_addr; #IP转发
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+            # 设置 options 请求处理
+            if ($request_method = 'OPTIONS') {
+               return 200;
+            }
+            proxy_pass http://gateway/;
+        }
+
+    }
+server {
+    listen      80;
+    listen      443 ssl;
+    include     conf.d/ssl.conf;
+    server_name ds.protco.in;
+    # security headers
+    add_header X-XSS-Protection          "1; mode=block" always;
+    add_header X-Content-Type-Options    "nosniff" always;
+    add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+    add_header Permissions-Policy        "interest-cohort=()" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    add_header 'Access-Control-Allow-Origin' '*' always;
+    add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+    add_header 'Access-Control-Allow-Credentials' 'true';
+    add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,X-Data-Type,X-Requested-With,X-Data-Type,X-Auth-Token';
+    #add_header 'Access-Control-Allow-Headers' '*';
+    # index.html fallback
+    location / {
+        rewrite ^/(.*)$ /business-app/v1/short/link/request/$1 break;
+        proxy_pass http://gateway;
+    }
+}
+server {
+        listen      80;
+        listen      443 ssl;
+        server_name devsupport.protco.in;
+
+        # security headers
+        add_header X-XSS-Protection          "1; mode=block" always;
+        add_header X-Content-Type-Options    "nosniff" always;
+        add_header Referrer-Policy           "no-referrer-when-downgrade" always;
+        add_header Permissions-Policy        "interest-cohort=()" always;
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        # 允许请求地址跨域 * 做为通配符
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        # 设置请求方法跨域
+        add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS';
+        # 设置是否允许 cookie 传输
+        add_header 'Access-Control-Allow-Credentials' 'true';
+        # 设置请求头 这里为什么不设置通配符 * 因为不支持
+        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,language,app_id,client_id,os_name';
+        include conf.d/ssl.conf;
+
+        # index.html fallback
+        #location / {
+        #    proxy_pass http://service;
+        #    #try_files $uri $uri/ /index.html;
+        #}
+
+        #现阶段前后端都使用同一域名,没有分别分配域名,故在va平台的配置中加入gateway服务端的配置
+        location / {
+           proxy_pass http://support;
+           proxy_http_version 1.1;
+           proxy_connect_timeout 4s;
+           proxy_read_timeout 3600s;   #默认60s没有传输数据就会关闭，延长时间
+           proxy_send_timeout 12s;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection $connection_upgrade;
+        }
+
+    }
